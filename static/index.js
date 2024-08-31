@@ -55,37 +55,29 @@ function updateTableRow(serverInfo) {
 // Main polling function
 async function pollServers() {
     const ips = await fetchServerIPs();
-    // console.log("Fetched server IPs:", ips);
     
+    const headerRow = document.querySelector('#header-row');
     const defaultRow = document.querySelector('#default-row');
-    const tableBody = document.querySelector('#server-table table tbody');
-    
+    const table = document.querySelector('#server-table table');
+
     if (ips.length > 0) {
-        // Hide default row if there are actual servers
-        if (defaultRow) {
-            defaultRow.style.display = 'none';
-        }
-        
-        for (const ip of ips) {
-            const serverInfo = await fetchServerInfo(ip);
-            // console.log("Fetched server info for", ip, ":", serverInfo);
-            if (serverInfo) {
-                // console.log("Updating table row for", ip);
+        defaultRow.style.display = 'none';
+
+        ips.forEach(ip => {
+            fetchServerInfo(ip).then(serverInfo => {
                 updateTableRow(serverInfo);
-            }
-        }
+            });
+        });
     } else {
-        // Show default row if there are no servers
-        if (defaultRow) {
-            defaultRow.style.display = '';
-        }
-        // Remove any existing server rows
-        Array.from(tableBody.children).forEach(row => {
-            if (row.id !== 'default-row') {
+        defaultRow.style.display = 'table-row';
+        // Remove all rows except the header and default row
+        Array.from(table.rows).forEach(row => {
+            if (row !== headerRow && row !== defaultRow) {
                 row.remove();
             }
         });
     }
+
 }
 
 // Start polling
