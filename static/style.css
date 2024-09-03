@@ -112,6 +112,7 @@ footer span {
 
 .toggle-text {
     margin: 0;
+    max-width: 80%;
 }
 
 .toggle-link {
