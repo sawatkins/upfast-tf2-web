@@ -33,6 +33,9 @@ func main() {
 	app.Use(logger.New())
 	app.Static("/", "./static")
 
+	app.Get("/api/server-ips", handlers.GetServerIPs)
+	app.Get("/api/server-info", handlers.GetServerInfo)
+
 	app.Get("/", handlers.Index)
 	app.Get("/about", handlers.About)
 	app.Use(handlers.NotFound)
