@@ -52,8 +52,26 @@ function updateTableRow(serverInfo) {
     `;
 }
 
-// Main polling function
+// Function to display refreshing state
+function setRefreshingState() {
+    const refreshButton = document.getElementById('refresh');
+    refreshButton.innerHTML = 'Refreshing...';
+    refreshButton.style.cursor = 'default';
+    refreshButton.style.textDecoration = 'none';
+}
+
+// Function to reset to ready state
+function setReadyState() {
+    const refreshButton = document.getElementById('refresh');
+    refreshButton.innerHTML = 'Manual refresh';
+    refreshButton.style.cursor = 'pointer';
+    refreshButton.style.textDecoration = 'underline';
+}
+
+// Modified pollServers function
 async function pollServers() {
+    console.log("polling servers...");
+    setRefreshingState();
     const ips = await fetchServerIPs();
     
     const headerRow = document.querySelector('#header-row');
@@ -78,9 +96,16 @@ async function pollServers() {
         });
     }
 
+    setReadyState();
 }
 
 // Start polling
 setInterval(pollServers, POLL_INTERVAL);
 pollServers(); // Initial poll
+
+// Add event listener for manual refresh
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refresh');
+    refreshButton.addEventListener('click', pollServers);
+});
 

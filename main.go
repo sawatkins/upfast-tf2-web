@@ -1,57 +1,42 @@
 package main
 
 import (
-	"io"
+	"flag"
 	"log"
-	"net/http"
-	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
+
+	"github.com/sawatkins/upfast-tf2-web/handlers"
 )
 
-const awsEndpoint = "https://bwdfgz2pbedm7ficoxqxbhfazi0ynfoh.lambda-url.us-west-1.on.aws"
-
 func main() {
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/", fs)
+	port := flag.String("port", ":8080", "Port to listen on")
+	prefork := flag.Bool("prefork", false, "Enable prefork in Production")
+	dev := flag.Bool("dev", true, "Enable development mode")
+	flag.Parse()
 
-	http.HandleFunc("/api/server-ips", handleServerIPs)
-	http.HandleFunc("/api/server-info", handleServerInfo)
 
-	log.Println("Starting server on :8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func handleServerIPs(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get(awsEndpoint)
-	if err != nil {
-		http.Error(w, "Failed to fetch server IPs", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
-}
-
-func handleServerInfo(w http.ResponseWriter, r *http.Request) {
-	ip := r.URL.Query().Get("ip")
-	if ip == "" {
-		http.Error(w, "Missing IP parameter", http.StatusBadRequest)
-		return
+	engine := html.New("./templates", ".html")
+	if *dev {
+		engine.Reload(true)
+		engine.Debug(true)
 	}
 
-	url := fmt.Sprintf("http://%s:8000/server-info", ip)
-	resp, err := http.Get(url)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch server info: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+	app := fiber.New(fiber.Config{
+		Prefork: *prefork,
+		Views:   engine,
+	})
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	app.Use(recover.New())
+	app.Use(logger.New())
+	app.Static("/", "./static")
+
+	app.Get("/", handlers.Index)
+	app.Get("/about", handlers.About)
+	app.Use(handlers.NotFound)
+
+	log.Println("Server starting on port", *port)
+	log.Fatal(app.Listen(*port)) // default port: 8080
 }
