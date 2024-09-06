@@ -211,11 +211,13 @@ body {
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
+  color: #1a1b1e;
 }
 
 .create-button:hover {
   background-color: #8194b3; 
-  text-decoration: underline;
+  /* text-decoration: underline; */
+  color: #1a1b1e;
 }
 
 .spin {
